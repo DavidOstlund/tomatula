@@ -16,7 +16,7 @@ def lineTodict(line, header, individuals):
         if fields[i].isdigit():
             d[str(header[i])] = int(fields[i])
         else:
-	    d[str(header[i])] = str(fields[i])
+            d[str(header[i])] = str(fields[i])
 
     # convert info field in an embeded dictionary
     s = d['INFO']
@@ -26,10 +26,10 @@ def lineTodict(line, header, individuals):
     for i in info:
         l = i.split('=')
 
-	if l[1].isdigit():
-	    info_dict[str(l[0])] = int(l[1])
-	else:
-	    info_dict[str(l[0])] = str(l[1])
+        if l[1].isdigit():
+            info_dict[str(l[0])] = int(l[1])
+        else:
+            info_dict[str(l[0])] = str(l[1])
 
     del d['INFO']
 
@@ -42,18 +42,22 @@ def lineTodict(line, header, individuals):
     for key in d:
         if key in individuals:
             ind_dict = dict()
-            form = d[key].split(':')
+            if type(d[key]) is not dict:
+                form = d[key].split(':')
 
-            if len(form) > 1:
-                for i in range(len(f)):
-		    if form[i].isdigit():
-			ind_dict[str(f[i])] = int(form[i])
-		    else:
-			ind_dict[str(f[i])] = str(form[i])
+                if len(form) > 1:
+                    for i in range(len(f)):
+                        if form[i].isdigit():
+                            ind_dict[str(f[i])] = int(form[i])
+                        else:
+                            ind_dict[str(f[i])] = str(form[i])
 
-            del d[key]
+                del d[key]
 
-            d[str(key)] = ind_dict
+                d[str(key)] = ind_dict
+            #else:
+            #    print(key)
+            #    print("Second time on this key")
     return d
 
 ## Main Function
@@ -64,30 +68,32 @@ def main(sc, inputFile, outputFile):
     lines = sc.textFile(inputFile)
 
     # Define headers
-    headerLines = lines.filter(lambda line: line.startswith(chr(35)))\
-                       .filter(lambda line: line[1] != chr(35))\
-                       .map(lambda line: line[1:])\
-                       .map(lambda line: line.split("\t"))\
-                       .collect()
+    headerLines = lines.filter(lambda line: line.startswith(chr(35))) \
+        .filter(lambda line: line[1] != chr(35)) \
+        .map(lambda line: line[1:]) \
+        .map(lambda line: line.split("\t")) \
+        .collect()
 
     header = []
     for i in headerLines[0]:
         if i[0] == '/':
-	    h = i[1:]
-	else:
-	    h = i
-	h = h.replace('.', '_').replace('/', '_').replace('-', '_')
-	header.append(h)
+            h = i[1:]
+        else:
+            h = i
+        h = h.replace('.', '_').replace('/', '_').replace('-', '_')
+        header.append(h)
 
     individuals = header[9:]
 
     # Convert VCF data lines to json dictionary and store in file
-    lines.filter(lambda line: not line.startswith(chr(35)))\
-         .map(lambda line: lineTodict(line, header, individuals))\
-         .saveAsTextFile(outputFile)
+
+    result = lines.filter(lambda line: not line.startswith(chr(35))).map(
+        lambda line: lineTodict(line, header, individuals))
+
+    result.saveAsTextFile(outputFile)
+
 
 if __name__ == "__main__":
-
     # Configure Options
     conf = SparkConf().setAppName(APP_NAME)
     sc = SparkContext(conf=conf)
