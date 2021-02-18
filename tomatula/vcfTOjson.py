@@ -42,22 +42,17 @@ def lineTodict(line, header, individuals):
     for key in d:
         if key in individuals:
             ind_dict = dict()
-            if type(d[key]) is not dict:
-                form = d[key].split(':')
+            form = d[key].split(':')
 
-                if len(form) > 1:
-                    for i in range(len(f)):
-                        if form[i].isdigit():
-                            ind_dict[str(f[i])] = int(form[i])
-                        else:
-                            ind_dict[str(f[i])] = str(form[i])
+            if len(form) > 1:
+                for i in range(len(f)):
+                    if form[i].isdigit():
+                        ind_dict[str(f[i])] = int(form[i])
+                    else:
+                        ind_dict[str(f[i])] = str(form[i])
 
-                del d[key]
+                d[key] = ind_dict
 
-                d[str(key)] = ind_dict
-            #else:
-            #    print(key)
-            #    print("Second time on this key")
     return d
 
 ## Main Function
